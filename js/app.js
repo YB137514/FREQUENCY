@@ -52,6 +52,13 @@ function init() {
     btBanner.classList.add('hidden');
   });
 
+  // Collapse/expand panel
+  const controls = document.getElementById('controls');
+  const collapseBtn = document.getElementById('btn-collapse');
+  collapseBtn.addEventListener('click', () => {
+    controls.classList.toggle('collapsed');
+  });
+
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

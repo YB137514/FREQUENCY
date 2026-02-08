@@ -64,14 +64,67 @@ html, body {
   border-radius: var(--radius) var(--radius) 0 0;
 }
 
-/* Title */
+/* Panel header with collapse toggle */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
 .app-title {
   text-align: center;
   font-size: 12px;
   letter-spacing: 4px;
   text-transform: uppercase;
   color: var(--text-dim);
-  margin-bottom: 4px;
+}
+
+.collapse-btn {
+  position: absolute;
+  right: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.collapse-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Collapsible body */
+#panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  max-height: 800px;
+  opacity: 1;
+}
+
+#controls.collapsed #panel-body {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#controls.collapsed .collapse-btn {
+  transform: rotate(180deg);
+}
+
+#controls.collapsed {
+  gap: 12px;
 }
 
 /* Slider groups */

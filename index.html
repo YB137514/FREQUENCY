@@ -35,103 +35,108 @@
 
   <!-- Control panel -->
   <div id="controls">
-    <div class="app-title">Frequency</div>
-
-    <!-- Bluetooth warning -->
-    <div id="bt-banner" class="banner">
-      <span>Use wired headphones — Bluetooth adds 50-300ms latency</span>
-      <button class="dismiss" id="bt-dismiss">&times;</button>
+    <div class="panel-header">
+      <div class="app-title">Frequency</div>
+      <button id="btn-collapse" class="collapse-btn" title="Collapse panel">&#9660;</button>
     </div>
 
-    <!-- Entrainment frequency -->
-    <div class="control-group">
-      <label>
-        Entrainment
-        <span class="value" id="pulse-freq-value">40 Hz</span>
-      </label>
-      <input type="range" id="pulse-freq"
-             min="0.5" max="50" step="0.01" value="40">
-      <div class="presets" id="presets"></div>
-    </div>
+    <div id="panel-body">
+      <!-- Bluetooth warning -->
+      <div id="bt-banner" class="banner">
+        <span>Use wired headphones — Bluetooth adds 50-300ms latency</span>
+        <button class="dismiss" id="bt-dismiss">&times;</button>
+      </div>
 
-    <!-- Carrier tone -->
-    <div class="control-group">
-      <label>
-        Carrier Tone
-        <span class="value" id="carrier-freq-value">200 Hz</span>
-      </label>
-      <input type="range" id="carrier-freq"
-             min="100" max="500" step="1" value="200">
-    </div>
+      <!-- Entrainment frequency -->
+      <div class="control-group">
+        <label>
+          Entrainment
+          <span class="value" id="pulse-freq-value">40 Hz</span>
+        </label>
+        <input type="range" id="pulse-freq"
+               min="0.5" max="50" step="0.01" value="40">
+        <div class="presets" id="presets"></div>
+      </div>
 
-    <!-- Flicker color -->
-    <div class="control-group">
-      <label>Flicker Color</label>
-      <div class="color-selector">
-        <button class="color-swatch active" data-color="#ffffff" style="background:#ffffff" title="White"></button>
-        <button class="color-swatch" data-color="#ff4444" style="background:#ff4444" title="Red"></button>
-        <button class="color-swatch" data-color="#ff8800" style="background:#ff8800" title="Orange"></button>
-        <button class="color-swatch" data-color="#ffdd00" style="background:#ffdd00" title="Yellow"></button>
-        <button class="color-swatch" data-color="#44ff44" style="background:#44ff44" title="Green"></button>
-        <button class="color-swatch" data-color="#00ccff" style="background:#00ccff" title="Cyan"></button>
-        <button class="color-swatch" data-color="#4444ff" style="background:#4444ff" title="Blue"></button>
-        <button class="color-swatch" data-color="#cc44ff" style="background:#cc44ff" title="Purple"></button>
-        <div class="color-custom-wrap">
-          <input type="color" id="color-picker" value="#ffffff" title="Custom color">
-          <span class="color-custom-label">Custom</span>
+      <!-- Carrier tone -->
+      <div class="control-group">
+        <label>
+          Carrier Tone
+          <span class="value" id="carrier-freq-value">200 Hz</span>
+        </label>
+        <input type="range" id="carrier-freq"
+               min="100" max="500" step="1" value="200">
+      </div>
+
+      <!-- Flicker color -->
+      <div class="control-group">
+        <label>Flicker Color</label>
+        <div class="color-selector">
+          <button class="color-swatch active" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+          <button class="color-swatch" data-color="#ff4444" style="background:#ff4444" title="Red"></button>
+          <button class="color-swatch" data-color="#ff8800" style="background:#ff8800" title="Orange"></button>
+          <button class="color-swatch" data-color="#ffdd00" style="background:#ffdd00" title="Yellow"></button>
+          <button class="color-swatch" data-color="#44ff44" style="background:#44ff44" title="Green"></button>
+          <button class="color-swatch" data-color="#00ccff" style="background:#00ccff" title="Cyan"></button>
+          <button class="color-swatch" data-color="#4444ff" style="background:#4444ff" title="Blue"></button>
+          <button class="color-swatch" data-color="#cc44ff" style="background:#cc44ff" title="Purple"></button>
+          <div class="color-custom-wrap">
+            <input type="color" id="color-picker" value="#ffffff" title="Custom color">
+            <span class="color-custom-label">Custom</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Mode selector -->
-    <div class="control-group">
-      <label>Mode</label>
-      <div class="mode-selector">
-        <label>
-          <input type="radio" name="mode" value="audio" checked>
-          <span>Sound</span>
-        </label>
-        <label>
-          <input type="radio" name="mode" value="visual">
-          <span>Light</span>
-        </label>
-        <label>
-          <input type="radio" name="mode" value="both">
-          <span>Both</span>
-        </label>
+      <!-- Mode selector -->
+      <div class="control-group">
+        <label>Mode</label>
+        <div class="mode-selector">
+          <label>
+            <input type="radio" name="mode" value="audio" checked>
+            <span>Sound</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="visual">
+            <span>Light</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="both">
+            <span>Both</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Live diagnostics -->
+      <div class="diagnostics" id="diagnostics">
+        <div class="diag-row">
+          <span class="diag-label">Carrier</span>
+          <span class="diag-target" id="diag-carrier-target">--</span>
+          <span class="diag-arrow">&rarr;</span>
+          <span class="diag-measured" id="diag-carrier-measured">--</span>
+        </div>
+        <div class="diag-row">
+          <span class="diag-label">Pulse</span>
+          <span class="diag-target" id="diag-pulse-target">--</span>
+          <span class="diag-arrow">&rarr;</span>
+          <span class="diag-measured" id="diag-pulse-measured">--</span>
+        </div>
+        <div class="diag-row">
+          <span class="diag-label">Flicker</span>
+          <span class="diag-target" id="diag-visual-target">--</span>
+          <span class="diag-arrow">&rarr;</span>
+          <span class="diag-measured" id="diag-visual-measured">--</span>
+        </div>
+      </div>
+
+      <!-- Info bar -->
+      <div class="info-bar">
+        <span>Display: <span id="refresh-rate">--</span></span>
+        <span id="flicker-warn"></span>
       </div>
     </div>
 
-    <!-- Start/Stop -->
+    <!-- Start/Stop always visible -->
     <button id="btn-toggle">Start</button>
-
-    <!-- Live diagnostics -->
-    <div class="diagnostics" id="diagnostics">
-      <div class="diag-row">
-        <span class="diag-label">Carrier</span>
-        <span class="diag-target" id="diag-carrier-target">--</span>
-        <span class="diag-arrow">&rarr;</span>
-        <span class="diag-measured" id="diag-carrier-measured">--</span>
-      </div>
-      <div class="diag-row">
-        <span class="diag-label">Pulse</span>
-        <span class="diag-target" id="diag-pulse-target">--</span>
-        <span class="diag-arrow">&rarr;</span>
-        <span class="diag-measured" id="diag-pulse-measured">--</span>
-      </div>
-      <div class="diag-row">
-        <span class="diag-label">Flicker</span>
-        <span class="diag-target" id="diag-visual-target">--</span>
-        <span class="diag-arrow">&rarr;</span>
-        <span class="diag-measured" id="diag-visual-measured">--</span>
-      </div>
-    </div>
-
-    <!-- Info bar -->
-    <div class="info-bar">
-      <span>Display: <span id="refresh-rate">--</span></span>
-      <span id="flicker-warn"></span>
-    </div>
   </div>
 
   <script type="module" src="js/app.js"></script>
