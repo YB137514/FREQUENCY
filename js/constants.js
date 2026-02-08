@@ -4,7 +4,7 @@
 
 export const PULSE_FREQ_MIN = 0.5;
 export const PULSE_FREQ_MAX = 50;
-export const PULSE_FREQ_DEFAULT = 10;
+export const PULSE_FREQ_DEFAULT = 40;
 
 export const CARRIER_FREQ_MIN = 100;
 export const CARRIER_FREQ_MAX = 500;
@@ -16,7 +16,7 @@ export const MODES = {
   BOTH: 'both'
 };
 
-export const MODE_DEFAULT = MODES.BOTH;
+export const MODE_DEFAULT = MODES.AUDIO;
 
 // Scheduler settings
 export const SCHEDULER_INTERVAL_MS = 100;
