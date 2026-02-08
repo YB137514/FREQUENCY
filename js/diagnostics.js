@@ -55,21 +55,20 @@ export class Diagnostics {
       return;
     }
 
-    // --- Binaural mode: carrier from FFT, beat from two-peak difference ---
+    // --- Binaural mode: both carrier and beat from two-peak FFT analysis ---
     if (binaural && binaural.analyser && binaural.running) {
-      const carrierHz = this._measureCarrier(binaural.analyser);
-      if (carrierHz > 0) {
-        this._carrierEma = this._emaUpdate(this._carrierEma, carrierHz, this._carrierEmaReady);
+      const peaks = this._measureBinauralPeaks(binaural.analyser);
+
+      if (peaks.carrier > 0) {
+        this._carrierEma = this._emaUpdate(this._carrierEma, peaks.carrier, this._carrierEmaReady);
         this._carrierEmaReady = true;
         this.els.carrierMeasured.textContent = this._carrierEma.toFixed(1) + ' Hz';
       } else if (!this._carrierEmaReady) {
         this.els.carrierMeasured.textContent = '--';
       }
 
-      // Beat frequency from two FFT peaks (carrier and carrier+beat)
-      const beatHz = this._measureBeat(binaural.analyser);
-      if (beatHz > 0) {
-        this._pulseEma = this._emaUpdate(this._pulseEma, beatHz, this._pulseEmaReady);
+      if (peaks.beat > 0) {
+        this._pulseEma = this._emaUpdate(this._pulseEma, peaks.beat, this._pulseEmaReady);
         this._pulseEmaReady = true;
         this.els.pulseMeasured.textContent = this._pulseEma.toFixed(1) + ' Hz';
       } else if (!this._pulseEmaReady) {
@@ -160,12 +159,14 @@ export class Diagnostics {
   }
 
   /**
-   * Detect binaural beat frequency from two FFT peaks.
+   * Detect binaural carrier and beat from two FFT peaks.
    * The AnalyserNode downmixes stereo to mono, producing two peaks:
    * one at carrierFreq and one at carrierFreq + beatFreq.
-   * The beat = difference between the two strongest peaks.
+   * Carrier = lower peak, beat = difference between peaks.
+   * @returns {{ carrier: number, beat: number }}
    */
-  _measureBeat(analyser) {
+  _measureBinauralPeaks(analyser) {
+    const result = { carrier: 0, beat: 0 };
     const bufLen = analyser.frequencyBinCount;
     const data = new Float32Array(bufLen);
     analyser.getFloatFrequencyData(data);
@@ -182,7 +183,17 @@ export class Diagnostics {
       }
     }
 
-    if (peak1Val < -80) return 0;
+    if (peak1Val < -80) return result;
+
+    // Parabolic interpolation helper
+    const interpolate = (bin) => {
+      if (bin > 0 && bin < bufLen - 1) {
+        const a = data[bin - 1], b = data[bin], g = data[bin + 1];
+        const denom = a - 2 * b + g;
+        if (denom !== 0) return (bin + 0.5 * (a - g) / denom) * binWidth;
+      }
+      return bin * binWidth;
+    };
 
     // Find second peak: must be at least 3 bins away from first
     let peak2Bin = 1, peak2Val = -Infinity;
@@ -193,23 +204,19 @@ export class Diagnostics {
       }
     }
 
-    // Second peak must be significant (within 30 dB of first)
-    if (peak2Val < -80 || peak1Val - peak2Val > 30) return 0;
-
-    // Apply parabolic interpolation to both peaks
-    const interpolate = (bin) => {
-      if (bin > 0 && bin < bufLen - 1) {
-        const a = data[bin - 1], b = data[bin], g = data[bin + 1];
-        const denom = a - 2 * b + g;
-        if (denom !== 0) return (bin + 0.5 * (a - g) / denom) * binWidth;
-      }
-      return bin * binWidth;
-    };
+    // If only one peak found, return it as carrier with no beat
+    if (peak2Val < -80 || peak1Val - peak2Val > 30) {
+      result.carrier = interpolate(peak1Bin);
+      return result;
+    }
 
     const freq1 = interpolate(peak1Bin);
     const freq2 = interpolate(peak2Bin);
 
-    return Math.abs(freq2 - freq1);
+    // Lower frequency = carrier, difference = beat
+    result.carrier = Math.min(freq1, freq2);
+    result.beat = Math.abs(freq2 - freq1);
+    return result;
   }
 
   /**
