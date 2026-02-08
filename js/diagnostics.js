@@ -55,7 +55,7 @@ export class Diagnostics {
       return;
     }
 
-    // --- Binaural mode: carrier FFT from binaural analyser, pulse = continuous ---
+    // --- Binaural mode: carrier from FFT, beat from two-peak difference ---
     if (binaural && binaural.analyser && binaural.running) {
       const carrierHz = this._measureCarrier(binaural.analyser);
       if (carrierHz > 0) {
@@ -66,8 +66,16 @@ export class Diagnostics {
         this.els.carrierMeasured.textContent = '--';
       }
 
-      // Continuous tone — no pulsing
-      this.els.pulseMeasured.textContent = 'continuous';
+      // Beat frequency from two FFT peaks (carrier and carrier+beat)
+      const beatHz = this._measureBeat(binaural.analyser);
+      if (beatHz > 0) {
+        this._pulseEma = this._emaUpdate(this._pulseEma, beatHz, this._pulseEmaReady);
+        this._pulseEmaReady = true;
+        this.els.pulseMeasured.textContent = this._pulseEma.toFixed(1) + ' Hz';
+      } else if (!this._pulseEmaReady) {
+        this.els.pulseMeasured.textContent = '--';
+      }
+
       this.els.visualMeasured.textContent = '--';
       return;
     }
@@ -149,6 +157,59 @@ export class Diagnostics {
     }
 
     return peakBin * binWidth;
+  }
+
+  /**
+   * Detect binaural beat frequency from two FFT peaks.
+   * The AnalyserNode downmixes stereo to mono, producing two peaks:
+   * one at carrierFreq and one at carrierFreq + beatFreq.
+   * The beat = difference between the two strongest peaks.
+   */
+  _measureBeat(analyser) {
+    const bufLen = analyser.frequencyBinCount;
+    const data = new Float32Array(bufLen);
+    analyser.getFloatFrequencyData(data);
+
+    const sampleRate = analyser.context.sampleRate;
+    const binWidth = sampleRate / analyser.fftSize;
+
+    // Find the two strongest peaks (skip DC bin 0)
+    let peak1Bin = 1, peak1Val = -Infinity;
+    for (let i = 1; i < bufLen; i++) {
+      if (data[i] > peak1Val) {
+        peak1Val = data[i];
+        peak1Bin = i;
+      }
+    }
+
+    if (peak1Val < -80) return 0;
+
+    // Find second peak: must be at least 3 bins away from first
+    let peak2Bin = 1, peak2Val = -Infinity;
+    for (let i = 1; i < bufLen; i++) {
+      if (Math.abs(i - peak1Bin) >= 3 && data[i] > peak2Val) {
+        peak2Val = data[i];
+        peak2Bin = i;
+      }
+    }
+
+    // Second peak must be significant (within 30 dB of first)
+    if (peak2Val < -80 || peak1Val - peak2Val > 30) return 0;
+
+    // Apply parabolic interpolation to both peaks
+    const interpolate = (bin) => {
+      if (bin > 0 && bin < bufLen - 1) {
+        const a = data[bin - 1], b = data[bin], g = data[bin + 1];
+        const denom = a - 2 * b + g;
+        if (denom !== 0) return (bin + 0.5 * (a - g) / denom) * binWidth;
+      }
+      return bin * binWidth;
+    };
+
+    const freq1 = interpolate(peak1Bin);
+    const freq2 = interpolate(peak2Bin);
+
+    return Math.abs(freq2 - freq1);
   }
 
   /**
