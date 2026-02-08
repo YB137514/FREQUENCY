@@ -29,15 +29,16 @@ export class SyncController {
     this.pulseFreq = PULSE_FREQ_DEFAULT;
     this.carrierFreq = CARRIER_FREQ_DEFAULT;
     this._active = false;
-    this._streamAudio = null;
-    this._streamDest = null;
+    this._wakeLock = null;
 
     // Resume AudioContext when returning from lock screen / background
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && this._active && this.audioCtx) {
-        if (this.audioCtx.state === 'suspended' || this.audioCtx.state === 'interrupted') {
+      if (document.visibilityState === 'visible' && this._active) {
+        if (this.audioCtx && (this.audioCtx.state === 'suspended' || this.audioCtx.state === 'interrupted')) {
           this.audioCtx.resume();
         }
+        // Re-acquire wake lock (released when page becomes hidden)
+        this._requestWakeLock();
       }
     });
   }
@@ -55,31 +56,28 @@ export class SyncController {
   }
 
   /**
-   * Route Web Audio output through an <audio> element via MediaStreamDestination.
-   * iOS keeps the audio session alive only when an HTMLMediaElement is actively
-   * playing — piping the real AudioContext output through one prevents iOS from
-   * suspending audio on screen lock.
+   * Request a Wake Lock to keep the screen on during a session.
+   * Prevents iOS/Android from sleeping, which would suspend audio.
    */
-  _startStreamKeepAlive() {
-    if (this._streamAudio) return;
-    if (!this.audioCtx.createMediaStreamDestination) return;
-
-    this._streamDest = this.audioCtx.createMediaStreamDestination();
-    this._streamAudio = new Audio();
-    this._streamAudio.srcObject = this._streamDest.stream;
-    this._streamAudio.play().catch(() => {});
+  async _requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      this._wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) {
+      // Wake lock request can fail (e.g. low battery)
+    }
   }
 
   /**
-   * Stop the stream keep-alive audio element.
+   * Release the Wake Lock.
    */
-  _stopStreamKeepAlive() {
-    if (this._streamAudio) {
-      this._streamAudio.pause();
-      this._streamAudio.srcObject = null;
-      this._streamAudio = null;
+  async _releaseWakeLock() {
+    if (this._wakeLock) {
+      try {
+        await this._wakeLock.release();
+      } catch (e) {}
+      this._wakeLock = null;
     }
-    this._streamDest = null;
   }
 
   /**
@@ -110,8 +108,8 @@ export class SyncController {
     this._ensureAudioContext();
     this._active = true;
 
-    // Keep audio alive during screen lock (iOS)
-    this._startStreamKeepAlive();
+    // Keep screen on to prevent audio suspension
+    this._requestWakeLock();
     this._setupMediaSession();
 
     // Create engines
@@ -125,13 +123,6 @@ export class SyncController {
     // Start based on mode
     if (this.mode === MODES.AUDIO || this.mode === MODES.BOTH) {
       this.audioEngine.start();
-      // Route audio to stream for iOS background playback
-      // When stream is active, disconnect from destination to avoid double output
-      // (iOS ignores <audio>.volume = 0)
-      if (this.audioEngine.analyser && this._streamDest) {
-        this.audioEngine.analyser.disconnect(this.audioCtx.destination);
-        this.audioEngine.analyser.connect(this._streamDest);
-      }
     }
 
     if (this.mode === MODES.VISUAL || this.mode === MODES.BOTH) {
@@ -165,7 +156,7 @@ export class SyncController {
       this.visualEngine.stop();
     }
 
-    this._stopStreamKeepAlive();
+    this._releaseWakeLock();
   }
 
   /**
