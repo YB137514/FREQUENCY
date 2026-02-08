@@ -29,6 +29,16 @@ export class SyncController {
     this.pulseFreq = PULSE_FREQ_DEFAULT;
     this.carrierFreq = CARRIER_FREQ_DEFAULT;
     this._active = false;
+    this._silentAudio = null;
+
+    // Resume AudioContext when returning from lock screen / background
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this._active && this.audioCtx) {
+        if (this.audioCtx.state === 'suspended' || this.audioCtx.state === 'interrupted') {
+          this.audioCtx.resume();
+        }
+      }
+    });
   }
 
   /**
@@ -44,11 +54,71 @@ export class SyncController {
   }
 
   /**
+   * Create a silent looping <audio> element to keep iOS audio session alive
+   * during screen lock. iOS suspends Web Audio API when there's no active
+   * HTMLMediaElement — this tiny silent loop prevents that.
+   */
+  _startSilentAudioKeepAlive() {
+    if (this._silentAudio) return;
+
+    // Generate a tiny silent WAV (1 sample, 1 channel, 8-bit, 8kHz)
+    const header = new Uint8Array([
+      0x52,0x49,0x46,0x46, 0x25,0x00,0x00,0x00, 0x57,0x41,0x56,0x45,
+      0x66,0x6D,0x74,0x20, 0x10,0x00,0x00,0x00, 0x01,0x00,0x01,0x00,
+      0x40,0x1F,0x00,0x00, 0x40,0x1F,0x00,0x00, 0x01,0x00,0x08,0x00,
+      0x64,0x61,0x74,0x61, 0x01,0x00,0x00,0x00, 0x80
+    ]);
+    const blob = new Blob([header], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+
+    this._silentAudio = new Audio(url);
+    this._silentAudio.loop = true;
+    this._silentAudio.volume = 0;
+    this._silentAudio.play().catch(() => {});
+  }
+
+  /**
+   * Stop the silent keep-alive audio element.
+   */
+  _stopSilentAudioKeepAlive() {
+    if (this._silentAudio) {
+      this._silentAudio.pause();
+      this._silentAudio.src = '';
+      this._silentAudio = null;
+    }
+  }
+
+  /**
+   * Register Media Session metadata and handlers for lock screen controls.
+   */
+  _setupMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'FREQUENCY',
+      artist: 'Brain Wave Entrainment',
+      album: this.pulseFreq + ' Hz'
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      if (!this._active) this.start();
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      if (this._active) this.stop();
+    });
+  }
+
+  /**
    * Start entrainment session.
    */
   start() {
     this._ensureAudioContext();
     this._active = true;
+
+    // Keep audio alive during screen lock (iOS)
+    this._startSilentAudioKeepAlive();
+    this._setupMediaSession();
 
     // Create engines
     this.audioEngine = new AudioEngine(this.audioCtx);
@@ -93,6 +163,8 @@ export class SyncController {
     if (this.visualEngine) {
       this.visualEngine.stop();
     }
+
+    this._stopSilentAudioKeepAlive();
   }
 
   /**
@@ -116,6 +188,11 @@ export class SyncController {
    */
   setPulseFrequency(freq) {
     this.pulseFreq = freq;
+
+    // Update lock screen display
+    if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+      navigator.mediaSession.metadata.album = freq + ' Hz';
+    }
 
     if (this.audioEngine && this.audioEngine.running) {
       this.audioEngine.setPulseFrequency(freq);

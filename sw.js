@@ -2,7 +2,7 @@
  * FREQUENCY — Service Worker (offline support)
  */
 
-const CACHE_NAME = 'frequency-v5';
+const CACHE_NAME = 'frequency-v6';
 
 const ASSETS = [
   './',
