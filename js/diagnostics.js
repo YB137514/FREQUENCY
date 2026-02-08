@@ -116,6 +116,20 @@ export class Diagnostics {
     }
 
     if (peakVal < -80) return 0;
+
+    // Parabolic interpolation for sub-bin accuracy
+    // Uses the peak bin and its two neighbors to find the true peak
+    if (peakBin > 0 && peakBin < bufLen - 1) {
+      const alpha = data[peakBin - 1];
+      const beta = data[peakBin];
+      const gamma = data[peakBin + 1];
+      const denom = alpha - 2 * beta + gamma;
+      if (denom !== 0) {
+        const correction = 0.5 * (alpha - gamma) / denom;
+        return (peakBin + correction) * binWidth;
+      }
+    }
+
     return peakBin * binWidth;
   }
 
