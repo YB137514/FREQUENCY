@@ -46,6 +46,7 @@ export class Diagnostics {
 
   _update() {
     const engine = this.controller.audioEngine;
+    const binaural = this.controller.binauralEngine;
     const visual = this.controller.visualEngine;
     const active = this.controller.active;
 
@@ -54,7 +55,24 @@ export class Diagnostics {
       return;
     }
 
-    // --- Carrier frequency from FFT ---
+    // --- Binaural mode: carrier FFT from binaural analyser, pulse = continuous ---
+    if (binaural && binaural.analyser && binaural.running) {
+      const carrierHz = this._measureCarrier(binaural.analyser);
+      if (carrierHz > 0) {
+        this._carrierEma = this._emaUpdate(this._carrierEma, carrierHz, this._carrierEmaReady);
+        this._carrierEmaReady = true;
+        this.els.carrierMeasured.textContent = this._carrierEma.toFixed(1) + ' Hz';
+      } else if (!this._carrierEmaReady) {
+        this.els.carrierMeasured.textContent = '--';
+      }
+
+      // Continuous tone — no pulsing
+      this.els.pulseMeasured.textContent = 'continuous';
+      this.els.visualMeasured.textContent = '--';
+      return;
+    }
+
+    // --- Isochronic mode: carrier frequency from FFT ---
     if (engine && engine.analyser && engine.running) {
       const carrierHz = this._measureCarrier(engine.analyser);
       if (carrierHz > 0) {

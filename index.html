@@ -47,6 +47,11 @@
         <button class="dismiss" id="bt-dismiss">&times;</button>
       </div>
 
+      <!-- Headphone warning for binaural mode -->
+      <div id="headphone-warn" class="banner binaural-warn hidden">
+        <span>Headphones required for binaural beats</span>
+      </div>
+
       <!-- Entrainment frequency -->
       <div class="control-group">
         <label>
@@ -54,7 +59,7 @@
           <span class="value" id="pulse-freq-value">40 Hz</span>
         </label>
         <input type="range" id="pulse-freq"
-               min="0.5" max="50" step="0.01" value="40">
+               min="0.25" max="50" step="0.01" value="40">
         <div class="presets" id="presets"></div>
       </div>
 
@@ -102,6 +107,10 @@
           <label>
             <input type="radio" name="mode" value="both">
             <span>Both</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="binaural">
+            <span>Binaural</span>
           </label>
         </div>
       </div>

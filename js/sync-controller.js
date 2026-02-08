@@ -7,6 +7,7 @@
  */
 
 import { AudioEngine } from './audio-engine.js';
+import { BinauralEngine } from './binaural-engine.js';
 import { VisualEngine } from './visual-engine.js';
 import {
   MODES,
@@ -23,6 +24,7 @@ export class SyncController {
     this.flickerOverlay = flickerOverlay;
     this.audioCtx = null;
     this.audioEngine = null;
+    this.binauralEngine = null;
     this.visualEngine = null;
 
     this.mode = MODE_DEFAULT;
@@ -112,16 +114,25 @@ export class SyncController {
     this._requestWakeLock();
     this._setupMediaSession();
 
-    // Create engines
+    if (this.mode === MODES.BINAURAL) {
+      // Binaural mode: continuous stereo tones, no visual engine
+      this.binauralEngine = new BinauralEngine(this.audioCtx);
+      await this.binauralEngine.init();
+      this.binauralEngine.carrierFreq = this.carrierFreq;
+      this.binauralEngine.beatFreq = this.pulseFreq;
+      this.binauralEngine.start();
+      return;
+    }
+
+    // Isochronic modes (audio / visual / both) — unchanged
     this.audioEngine = new AudioEngine(this.audioCtx);
-    await this.audioEngine.init(); // Load AudioWorklet module
+    await this.audioEngine.init();
     this.audioEngine.carrierFreq = this.carrierFreq;
     this.audioEngine.pulseFreq = this.pulseFreq;
 
     this.visualEngine = new VisualEngine(this.audioCtx, this.flickerOverlay);
     this.visualEngine.pulseFreq = this.pulseFreq;
 
-    // Start based on mode
     if (this.mode === MODES.AUDIO || this.mode === MODES.BOTH) {
       this.audioEngine.start();
     }
@@ -133,13 +144,10 @@ export class SyncController {
       this.visualEngine.start(startTime);
     }
 
-    // If audio-only mode, still need a start time reference for visual
     if (this.mode === MODES.AUDIO) {
-      // Visual not started, but we store startTime for potential mode switch
       this.visualEngine._startTime = this.audioEngine.startTime;
     }
     if (this.mode === MODES.VISUAL && !this.audioEngine.running) {
-      // Start audio engine silently for clock, or just use audioCtx time
       this.visualEngine._startTime = this.audioCtx.currentTime;
     }
   }
@@ -150,6 +158,10 @@ export class SyncController {
   stop() {
     this._active = false;
 
+    if (this.binauralEngine) {
+      this.binauralEngine.stop();
+      this.binauralEngine = null;
+    }
     if (this.audioEngine) {
       this.audioEngine.stop();
     }
@@ -162,7 +174,7 @@ export class SyncController {
 
   /**
    * Set the entrainment mode.
-   * @param {string} newMode — 'audio', 'visual', or 'both'
+   * @param {string} newMode — 'audio', 'visual', 'both', or 'binaural'
    */
   async setMode(newMode) {
     this.mode = newMode;
@@ -187,6 +199,12 @@ export class SyncController {
       navigator.mediaSession.metadata.album = freq + ' Hz';
     }
 
+    // Binaural mode: pulse frequency = beat frequency
+    if (this.binauralEngine && this.binauralEngine.running) {
+      this.binauralEngine.setBeatFrequency(freq);
+      return;
+    }
+
     if (this.audioEngine && this.audioEngine.running) {
       this.audioEngine.setPulseFrequency(freq);
       // Sync visual engine's start time with audio engine's reset
@@ -205,6 +223,9 @@ export class SyncController {
    */
   setCarrierFrequency(freq) {
     this.carrierFreq = freq;
+    if (this.binauralEngine) {
+      this.binauralEngine.setCarrierFrequency(freq);
+    }
     if (this.audioEngine) {
       this.audioEngine.setCarrierFrequency(freq);
     }

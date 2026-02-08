@@ -7,6 +7,7 @@
 import {
   PULSE_FREQ_MIN, PULSE_FREQ_MAX,
   CARRIER_FREQ_MIN, CARRIER_FREQ_MAX,
+  MODES,
   PRESETS
 } from './constants.js';
 
@@ -35,6 +36,13 @@ export class UIControls {
     this.diagCarrierTarget = document.getElementById('diag-carrier-target');
     this.diagPulseTarget = document.getElementById('diag-pulse-target');
     this.diagVisualTarget = document.getElementById('diag-visual-target');
+    this.headphoneWarn = document.getElementById('headphone-warn');
+    this.flickerColorGroup = this.flickerOverlay
+      ? document.querySelector('.color-selector')?.closest('.control-group')
+      : null;
+    this.entrainmentLabel = this.pulseSlider
+      ? this.pulseSlider.closest('.control-group')?.querySelector('label')
+      : null;
 
     this._flickerColor = localStorage.getItem('frequency_flicker_color') || '#ffffff';
 
@@ -85,6 +93,7 @@ export class UIControls {
     this.modeRadios.forEach(radio => {
       radio.addEventListener('change', async () => {
         if (radio.checked) {
+          this._updateModeUI(radio.value);
           await this.controller.setMode(radio.value);
         }
       });
@@ -103,6 +112,35 @@ export class UIControls {
     this.colorPicker.addEventListener('input', () => {
       this._applyFlickerColor(this.colorPicker.value);
     });
+  }
+
+  /**
+   * Update UI elements based on selected mode.
+   * Shows/hides headphone warning and flicker color controls.
+   * @param {string} mode
+   */
+  _updateModeUI(mode) {
+    const isBinaural = mode === MODES.BINAURAL;
+
+    // Headphone warning
+    if (this.headphoneWarn) {
+      this.headphoneWarn.classList.toggle('hidden', !isBinaural);
+    }
+
+    // Hide flicker color controls in binaural mode
+    if (this.flickerColorGroup) {
+      this.flickerColorGroup.classList.toggle('hidden', isBinaural);
+    }
+
+    // Update entrainment label
+    if (this.entrainmentLabel) {
+      const labelText = this.entrainmentLabel.childNodes[0];
+      if (labelText) {
+        labelText.textContent = isBinaural ? 'Beat Frequency ' : 'Entrainment ';
+      }
+    }
+
+    this._updateDisplays();
   }
 
   _applyFlickerColor(color) {

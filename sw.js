@@ -4,7 +4,7 @@
  * then fetches fresh copy in background to update cache.
  */
 
-const CACHE_NAME = 'frequency-v13';
+const CACHE_NAME = 'frequency-v14';
 
 const ASSETS = [
   './',
@@ -16,6 +16,8 @@ const ASSETS = [
   './js/sync-controller.js',
   './js/ui-controls.js',
   './js/pulse-worklet-processor.js',
+  './js/binaural-worklet-processor.js',
+  './js/binaural-engine.js',
   './js/diagnostics.js',
   './js/app.js',
   './manifest.json',
