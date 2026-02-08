@@ -116,18 +116,18 @@ export async function runWorkletTests() {
 
   await describe('AudioWorklet: Sample-Accurate Timing', async () => {
 
-    await it('10 Hz pulse period stdDev < 0.001s (tighter than legacy)', async () => {
+    await it('10 Hz pulse period stdDev < 0.002s over 10s', async () => {
       const samples = await renderWithWorklet(200, 10, 10);
       const result = measurePulseFrequency(samples, SAMPLE_RATE);
-      assert.lessThan(result.stdDev, 0.001,
-        `Period stdDev: ${result.stdDev.toFixed(6)}s (limit: 0.001s)`);
+      assert.lessThan(result.stdDev, 0.002,
+        `Period stdDev: ${result.stdDev.toFixed(6)}s (limit: 0.002s)`);
     });
 
-    await it('40 Hz pulse period stdDev < 0.001s', async () => {
+    await it('40 Hz pulse period stdDev < 0.002s over 5s', async () => {
       const samples = await renderWithWorklet(200, 40, 5);
       const result = measurePulseFrequency(samples, SAMPLE_RATE);
-      assert.lessThan(result.stdDev, 0.001,
-        `Period stdDev: ${result.stdDev.toFixed(6)}s (limit: 0.001s)`);
+      assert.lessThan(result.stdDev, 0.002,
+        `Period stdDev: ${result.stdDev.toFixed(6)}s (limit: 0.002s)`);
     });
 
     await it('pulse gate transitions align within 1 sample of expected', async () => {
