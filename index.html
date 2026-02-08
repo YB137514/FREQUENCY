@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="Brain wave entrainment with isochronic tones and synchronized screen flicker">
+  <title>FREQUENCY</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+  <!-- Full-screen flicker overlay -->
+  <div id="flicker-overlay"></div>
+
+  <!-- Epilepsy warning modal -->
+  <div id="epilepsy-modal" class="modal-overlay">
+    <div class="modal">
+      <h2>Photosensitivity Warning</h2>
+      <p>
+        This app produces <strong>flashing lights</strong> and pulsing audio
+        for brain wave entrainment. It should not be used by individuals with
+        epilepsy or a history of seizures. Use at your own risk.
+      </p>
+      <p>
+        If you experience any discomfort, dizziness, or visual disturbance,
+        stop immediately.
+      </p>
+      <button id="epilepsy-accept">I Understand</button>
+    </div>
+  </div>
+
+  <!-- Control panel -->
+  <div id="controls">
+    <div class="app-title">Frequency</div>
+
+    <!-- Bluetooth warning -->
+    <div id="bt-banner" class="banner">
+      <span>Use wired headphones — Bluetooth adds 50-300ms latency</span>
+      <button class="dismiss" id="bt-dismiss">&times;</button>
+    </div>
+
+    <!-- Entrainment frequency -->
+    <div class="control-group">
+      <label>
+        Entrainment
+        <span class="value" id="pulse-freq-value">10 Hz</span>
+      </label>
+      <input type="range" id="pulse-freq"
+             min="0.5" max="50" step="0.01" value="10">
+      <div class="presets" id="presets"></div>
+    </div>
+
+    <!-- Carrier tone -->
+    <div class="control-group">
+      <label>
+        Carrier Tone
+        <span class="value" id="carrier-freq-value">200 Hz</span>
+      </label>
+      <input type="range" id="carrier-freq"
+             min="100" max="500" step="1" value="200">
+    </div>
+
+    <!-- Flicker color -->
+    <div class="control-group">
+      <label>Flicker Color</label>
+      <div class="color-selector">
+        <button class="color-swatch active" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+        <button class="color-swatch" data-color="#ff4444" style="background:#ff4444" title="Red"></button>
+        <button class="color-swatch" data-color="#ff8800" style="background:#ff8800" title="Orange"></button>
+        <button class="color-swatch" data-color="#ffdd00" style="background:#ffdd00" title="Yellow"></button>
+        <button class="color-swatch" data-color="#44ff44" style="background:#44ff44" title="Green"></button>
+        <button class="color-swatch" data-color="#00ccff" style="background:#00ccff" title="Cyan"></button>
+        <button class="color-swatch" data-color="#4444ff" style="background:#4444ff" title="Blue"></button>
+        <button class="color-swatch" data-color="#cc44ff" style="background:#cc44ff" title="Purple"></button>
+        <div class="color-custom-wrap">
+          <input type="color" id="color-picker" value="#ffffff" title="Custom color">
+          <span class="color-custom-label">Custom</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode selector -->
+    <div class="control-group">
+      <label>Mode</label>
+      <div class="mode-selector">
+        <label>
+          <input type="radio" name="mode" value="audio">
+          <span>Sound</span>
+        </label>
+        <label>
+          <input type="radio" name="mode" value="visual">
+          <span>Light</span>
+        </label>
+        <label>
+          <input type="radio" name="mode" value="both" checked>
+          <span>Both</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Start/Stop -->
+    <button id="btn-toggle">Start</button>
+
+    <!-- Live diagnostics -->
+    <div class="diagnostics" id="diagnostics">
+      <div class="diag-row">
+        <span class="diag-label">Carrier</span>
+        <span class="diag-target" id="diag-carrier-target">--</span>
+        <span class="diag-arrow">&rarr;</span>
+        <span class="diag-measured" id="diag-carrier-measured">--</span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Pulse</span>
+        <span class="diag-target" id="diag-pulse-target">--</span>
+        <span class="diag-arrow">&rarr;</span>
+        <span class="diag-measured" id="diag-pulse-measured">--</span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Flicker</span>
+        <span class="diag-target" id="diag-visual-target">--</span>
+        <span class="diag-arrow">&rarr;</span>
+        <span class="diag-measured" id="diag-visual-measured">--</span>
+      </div>
+    </div>
+
+    <!-- Info bar -->
+    <div class="info-bar">
+      <span>Display: <span id="refresh-rate">--</span></span>
+      <span id="flicker-warn"></span>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

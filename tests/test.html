@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FREQUENCY — Test Suite</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #0a0a0f;
+      color: #e0e0f0;
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 16px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #8888aa;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls button {
+      padding: 8px 16px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #1a1a2e;
+      color: #e0e0f0;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      border-color: #6c5ce7;
+    }
+
+    .controls button.running {
+      border-color: #feca57;
+      color: #feca57;
+    }
+
+    .summary {
+      padding: 12px 16px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .test {
+      padding: 6px 12px;
+      border-left: 3px solid transparent;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .test.pass {
+      border-left-color: #00d2d3;
+    }
+
+    .test.pass .icon { color: #00d2d3; }
+
+    .test.fail {
+      border-left-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.05);
+    }
+
+    .test.fail .icon { color: #ff6b6b; }
+
+    .test.running {
+      border-left-color: #feca57;
+    }
+
+    .test.running .icon { color: #feca57; }
+
+    .icon { margin-right: 8px; }
+    .dur { color: #666; margin-left: 8px; font-size: 11px; }
+
+    .error {
+      margin-top: 4px;
+      padding: 8px 12px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 4px;
+      font-size: 12px;
+      color: #ff6b6b;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>FREQUENCY Test Suite</h1>
+
+  <div class="controls">
+    <button id="run-all">Run All Tests</button>
+    <button id="run-audio">Audio Engine</button>
+    <button id="run-visual">Visual Engine</button>
+    <button id="run-sync">Sync & Drift</button>
+    <button id="run-edge">Edge Cases</button>
+    <button id="run-diag">Diagnostics</button>
+  </div>
+
+  <div id="test-results"></div>
+
+  <script type="module">
+    import { runAudioEngineTests } from './test-audio-engine.js';
+    import { runVisualEngineTests } from './test-visual-engine.js';
+    import { runSyncTests } from './test-sync.js';
+    import { runEdgeCaseTests } from './test-edge-cases.js';
+    import { runDiagnosticsTests } from './test-diagnostics.js';
+
+    function bindBtn(id, fn) {
+      const btn = document.getElementById(id);
+      btn.addEventListener('click', async () => {
+        btn.classList.add('running');
+        btn.disabled = true;
+        try {
+          await fn();
+        } catch (e) {
+          console.error(e);
+        }
+        btn.classList.remove('running');
+        btn.disabled = false;
+      });
+    }
+
+    bindBtn('run-audio', runAudioEngineTests);
+    bindBtn('run-visual', runVisualEngineTests);
+    bindBtn('run-sync', runSyncTests);
+    bindBtn('run-edge', runEdgeCaseTests);
+    bindBtn('run-diag', runDiagnosticsTests);
+
+    bindBtn('run-all', async () => {
+      await runAudioEngineTests();
+      await runVisualEngineTests();
+      await runSyncTests();
+      await runEdgeCaseTests();
+      await runDiagnosticsTests();
+    });
+  </script>
+</body>
+</html>
