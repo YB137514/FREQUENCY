@@ -71,7 +71,10 @@ export class Diagnostics {
         this._pulseEma = this._emaUpdate(this._pulseEma, peaks.beat, this._pulseEmaReady);
         this._pulseEmaReady = true;
         this.els.pulseMeasured.textContent = this._pulseEma.toFixed(1) + ' Hz';
-      } else if (!this._pulseEmaReady) {
+      } else {
+        // Beat too small for FFT resolution — clear stale reading
+        this._pulseEma = 0;
+        this._pulseEmaReady = false;
         this.els.pulseMeasured.textContent = '--';
       }
 
@@ -195,9 +198,12 @@ export class Diagnostics {
       return bin * binWidth;
     };
 
-    // Find second peak: must be at least 3 bins away from first
+    // Find second peak: at least 3 bins from first, within ±60 Hz (max beat range)
+    const maxBeatBins = Math.ceil(60 / binWidth);
+    const searchLo = Math.max(1, peak1Bin - maxBeatBins);
+    const searchHi = Math.min(bufLen - 1, peak1Bin + maxBeatBins);
     let peak2Bin = 1, peak2Val = -Infinity;
-    for (let i = 1; i < bufLen; i++) {
+    for (let i = searchLo; i <= searchHi; i++) {
       if (Math.abs(i - peak1Bin) >= 3 && data[i] > peak2Val) {
         peak2Val = data[i];
         peak2Bin = i;
