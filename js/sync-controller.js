@@ -67,6 +67,7 @@ export class SyncController {
     this._streamDest = this.audioCtx.createMediaStreamDestination();
     this._streamAudio = new Audio();
     this._streamAudio.srcObject = this._streamDest.stream;
+    this._streamAudio.volume = 0; // Muted — only needs to be "playing" for iOS
     this._streamAudio.play().catch(() => {});
   }
 
