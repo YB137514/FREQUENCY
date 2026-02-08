@@ -67,18 +67,7 @@ export class SyncController {
     this._streamDest = this.audioCtx.createMediaStreamDestination();
     this._streamAudio = new Audio();
     this._streamAudio.srcObject = this._streamDest.stream;
-    this._streamAudio.volume = 0; // Muted — only needs to be "playing" for iOS
     this._streamAudio.play().catch(() => {});
-  }
-
-  /**
-   * Connect an audio node to the stream destination for iOS background playback.
-   * @param {AudioNode} node — the node to also route to the stream
-   */
-  _connectToStream(node) {
-    if (this._streamDest) {
-      node.connect(this._streamDest);
-    }
   }
 
   /**
@@ -137,8 +126,11 @@ export class SyncController {
     if (this.mode === MODES.AUDIO || this.mode === MODES.BOTH) {
       this.audioEngine.start();
       // Route audio to stream for iOS background playback
-      if (this.audioEngine.analyser) {
-        this._connectToStream(this.audioEngine.analyser);
+      // When stream is active, disconnect from destination to avoid double output
+      // (iOS ignores <audio>.volume = 0)
+      if (this.audioEngine.analyser && this._streamDest) {
+        this.audioEngine.analyser.disconnect(this.audioCtx.destination);
+        this.audioEngine.analyser.connect(this._streamDest);
       }
     }
 
