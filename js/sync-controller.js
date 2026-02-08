@@ -29,7 +29,8 @@ export class SyncController {
     this.pulseFreq = PULSE_FREQ_DEFAULT;
     this.carrierFreq = CARRIER_FREQ_DEFAULT;
     this._active = false;
-    this._silentAudio = null;
+    this._streamAudio = null;
+    this._streamDest = null;
 
     // Resume AudioContext when returning from lock screen / background
     document.addEventListener('visibilitychange', () => {
@@ -54,38 +55,41 @@ export class SyncController {
   }
 
   /**
-   * Create a silent looping <audio> element to keep iOS audio session alive
-   * during screen lock. iOS suspends Web Audio API when there's no active
-   * HTMLMediaElement — this tiny silent loop prevents that.
+   * Route Web Audio output through an <audio> element via MediaStreamDestination.
+   * iOS keeps the audio session alive only when an HTMLMediaElement is actively
+   * playing — piping the real AudioContext output through one prevents iOS from
+   * suspending audio on screen lock.
    */
-  _startSilentAudioKeepAlive() {
-    if (this._silentAudio) return;
+  _startStreamKeepAlive() {
+    if (this._streamAudio) return;
+    if (!this.audioCtx.createMediaStreamDestination) return;
 
-    // Generate a tiny silent WAV (1 sample, 1 channel, 8-bit, 8kHz)
-    const header = new Uint8Array([
-      0x52,0x49,0x46,0x46, 0x25,0x00,0x00,0x00, 0x57,0x41,0x56,0x45,
-      0x66,0x6D,0x74,0x20, 0x10,0x00,0x00,0x00, 0x01,0x00,0x01,0x00,
-      0x40,0x1F,0x00,0x00, 0x40,0x1F,0x00,0x00, 0x01,0x00,0x08,0x00,
-      0x64,0x61,0x74,0x61, 0x01,0x00,0x00,0x00, 0x80
-    ]);
-    const blob = new Blob([header], { type: 'audio/wav' });
-    const url = URL.createObjectURL(blob);
-
-    this._silentAudio = new Audio(url);
-    this._silentAudio.loop = true;
-    this._silentAudio.volume = 0;
-    this._silentAudio.play().catch(() => {});
+    this._streamDest = this.audioCtx.createMediaStreamDestination();
+    this._streamAudio = new Audio();
+    this._streamAudio.srcObject = this._streamDest.stream;
+    this._streamAudio.play().catch(() => {});
   }
 
   /**
-   * Stop the silent keep-alive audio element.
+   * Connect an audio node to the stream destination for iOS background playback.
+   * @param {AudioNode} node — the node to also route to the stream
    */
-  _stopSilentAudioKeepAlive() {
-    if (this._silentAudio) {
-      this._silentAudio.pause();
-      this._silentAudio.src = '';
-      this._silentAudio = null;
+  _connectToStream(node) {
+    if (this._streamDest) {
+      node.connect(this._streamDest);
     }
+  }
+
+  /**
+   * Stop the stream keep-alive audio element.
+   */
+  _stopStreamKeepAlive() {
+    if (this._streamAudio) {
+      this._streamAudio.pause();
+      this._streamAudio.srcObject = null;
+      this._streamAudio = null;
+    }
+    this._streamDest = null;
   }
 
   /**
@@ -117,7 +121,7 @@ export class SyncController {
     this._active = true;
 
     // Keep audio alive during screen lock (iOS)
-    this._startSilentAudioKeepAlive();
+    this._startStreamKeepAlive();
     this._setupMediaSession();
 
     // Create engines
@@ -131,6 +135,10 @@ export class SyncController {
     // Start based on mode
     if (this.mode === MODES.AUDIO || this.mode === MODES.BOTH) {
       this.audioEngine.start();
+      // Route audio to stream for iOS background playback
+      if (this.audioEngine.analyser) {
+        this._connectToStream(this.audioEngine.analyser);
+      }
     }
 
     if (this.mode === MODES.VISUAL || this.mode === MODES.BOTH) {
@@ -164,7 +172,7 @@ export class SyncController {
       this.visualEngine.stop();
     }
 
-    this._stopSilentAudioKeepAlive();
+    this._stopStreamKeepAlive();
   }
 
   /**
