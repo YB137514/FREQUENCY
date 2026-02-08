@@ -8,7 +8,7 @@ export const PULSE_FREQ_DEFAULT = 40;
 
 export const CARRIER_FREQ_MIN = 100;
 export const CARRIER_FREQ_MAX = 500;
-export const CARRIER_FREQ_DEFAULT = 200;
+export const CARRIER_FREQ_DEFAULT = 250;
 
 export const MODES = {
   AUDIO: 'audio',
