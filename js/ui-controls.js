@@ -63,26 +63,29 @@ export class UIControls {
     });
 
     // Start/Stop button
-    this.toggleBtn.addEventListener('click', () => {
+    this.toggleBtn.addEventListener('click', async () => {
       if (this.controller.active) {
         this.controller.stop();
         if (this.diagnostics) this.diagnostics.stop();
         this.toggleBtn.textContent = 'Start';
         this.toggleBtn.classList.remove('active');
       } else {
-        this.controller.start();
+        this.toggleBtn.disabled = true;
+        this.toggleBtn.textContent = 'Loading...';
+        await this.controller.start();
         if (this.diagnostics) this.diagnostics.start();
         this.toggleBtn.textContent = 'Stop';
         this.toggleBtn.classList.add('active');
+        this.toggleBtn.disabled = false;
         this._updateDiagTargets();
       }
     });
 
     // Mode radio buttons
     this.modeRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
+      radio.addEventListener('change', async () => {
         if (radio.checked) {
-          this.controller.setMode(radio.value);
+          await this.controller.setMode(radio.value);
         }
       });
     });

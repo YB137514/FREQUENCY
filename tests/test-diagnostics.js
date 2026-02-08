@@ -23,6 +23,7 @@ async function renderPulseBuffer(carrierFreq, pulseFreq, offset = 0) {
   const offlineCtx = new OfflineAudioContext(1, totalSamples, SAMPLE_RATE);
 
   const engine = new AudioEngine(offlineCtx);
+  await engine.init();
   engine.carrierFreq = carrierFreq;
   engine.pulseFreq = pulseFreq;
   engine.start();

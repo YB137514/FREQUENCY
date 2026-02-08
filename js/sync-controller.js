@@ -104,7 +104,7 @@ export class SyncController {
   /**
    * Start entrainment session.
    */
-  start() {
+  async start() {
     this._ensureAudioContext();
     this._active = true;
 
@@ -114,6 +114,7 @@ export class SyncController {
 
     // Create engines
     this.audioEngine = new AudioEngine(this.audioCtx);
+    await this.audioEngine.init(); // Load AudioWorklet module
     this.audioEngine.carrierFreq = this.carrierFreq;
     this.audioEngine.pulseFreq = this.pulseFreq;
 
@@ -163,7 +164,7 @@ export class SyncController {
    * Set the entrainment mode.
    * @param {string} newMode — 'audio', 'visual', or 'both'
    */
-  setMode(newMode) {
+  async setMode(newMode) {
     this.mode = newMode;
 
     if (!this._active) return;
@@ -171,7 +172,7 @@ export class SyncController {
     // Stop and restart to apply new mode cleanly
     this.stop();
     this._active = true;
-    this.start();
+    await this.start();
   }
 
   /**

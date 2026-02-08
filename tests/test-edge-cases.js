@@ -19,6 +19,7 @@ async function renderAudio(carrierFreq, pulseFreq, duration) {
   const offlineCtx = new OfflineAudioContext(1, totalSamples, SAMPLE_RATE);
 
   const engine = new AudioEngine(offlineCtx);
+  await engine.init(); // Load AudioWorklet if available
   engine.carrierFreq = carrierFreq;
   engine.pulseFreq = pulseFreq;
 
@@ -67,6 +68,7 @@ export async function runEdgeCaseTests() {
     await it('audio engine starts and stops cleanly', async () => {
       const offlineCtx = new OfflineAudioContext(1, SAMPLE_RATE * 1, SAMPLE_RATE);
       const engine = new AudioEngine(offlineCtx);
+      await engine.init();
       engine.pulseFreq = 10;
       engine.carrierFreq = 200;
 
@@ -80,14 +82,14 @@ export async function runEdgeCaseTests() {
     await it('AudioEngine state is clean after stop', async () => {
       const offlineCtx = new OfflineAudioContext(1, SAMPLE_RATE * 1, SAMPLE_RATE);
       const engine = new AudioEngine(offlineCtx);
+      await engine.init();
       engine.pulseFreq = 10;
       engine.carrierFreq = 200;
 
       engine.start();
       engine.stop();
 
-      assert.equal(engine.oscillator, null, 'Oscillator should be null after stop');
-      assert.equal(engine.gainNode, null, 'GainNode should be null after stop');
+      assert.equal(engine.analyser, null, 'Analyser should be null after stop');
     });
   });
 
@@ -100,6 +102,7 @@ export async function runEdgeCaseTests() {
         try {
           const offlineCtx = new OfflineAudioContext(1, SAMPLE_RATE, SAMPLE_RATE);
           const engine = new AudioEngine(offlineCtx);
+          await engine.init();
           engine.pulseFreq = 10;
           engine.carrierFreq = 200;
           engine.start();

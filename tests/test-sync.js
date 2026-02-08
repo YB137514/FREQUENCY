@@ -103,6 +103,7 @@ export async function runSyncTests() {
 
       const offlineCtx = new OfflineAudioContext(1, totalSamples, SAMPLE_RATE);
       const engine = new AudioEngine(offlineCtx);
+      await engine.init();
       engine.pulseFreq = pulseFreq;
       engine.carrierFreq = 200;
 

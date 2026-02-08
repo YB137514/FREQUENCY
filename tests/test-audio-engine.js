@@ -23,6 +23,7 @@ async function renderAudio(carrierFreq, pulseFreq, duration) {
   const offlineCtx = new OfflineAudioContext(1, totalSamples, SAMPLE_RATE);
 
   const engine = new AudioEngine(offlineCtx);
+  await engine.init(); // Load AudioWorklet if available
   engine.carrierFreq = carrierFreq;
   engine.pulseFreq = pulseFreq;
 

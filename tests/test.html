@@ -108,6 +108,7 @@
     <button id="run-visual">Visual Engine</button>
     <button id="run-sync">Sync & Drift</button>
     <button id="run-edge">Edge Cases</button>
+    <button id="run-worklet">AudioWorklet</button>
     <button id="run-diag">Diagnostics</button>
   </div>
 
@@ -118,6 +119,7 @@
     import { runVisualEngineTests } from './test-visual-engine.js';
     import { runSyncTests } from './test-sync.js';
     import { runEdgeCaseTests } from './test-edge-cases.js';
+    import { runWorkletTests } from './test-worklet.js';
     import { runDiagnosticsTests } from './test-diagnostics.js';
 
     function bindBtn(id, fn) {
@@ -139,6 +141,7 @@
     bindBtn('run-visual', runVisualEngineTests);
     bindBtn('run-sync', runSyncTests);
     bindBtn('run-edge', runEdgeCaseTests);
+    bindBtn('run-worklet', runWorkletTests);
     bindBtn('run-diag', runDiagnosticsTests);
 
     bindBtn('run-all', async () => {
@@ -146,6 +149,7 @@
       await runVisualEngineTests();
       await runSyncTests();
       await runEdgeCaseTests();
+      await runWorkletTests();
       await runDiagnosticsTests();
     });
   </script>
