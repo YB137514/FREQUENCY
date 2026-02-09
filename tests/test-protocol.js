@@ -13,12 +13,15 @@ import {
   PROTOCOL_DURATION
 } from '../js/protocol-runner.js';
 
-/** Mock SyncController that records setPulseFrequency calls. */
+/** Mock SyncController that records frequency update calls. */
 function createMockController() {
   return {
     frequencies: [],
     active: true,
     setPulseFrequency(freq) {
+      this.frequencies.push(freq);
+    },
+    rampPulseFrequency(freq) {
       this.frequencies.push(freq);
     }
   };

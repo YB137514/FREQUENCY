@@ -218,6 +218,35 @@ export class SyncController {
   }
 
   /**
+   * Set pulse frequency smoothly without phase reset.
+   * Used by protocol runner for continuous frequency updates.
+   * @param {number} freq
+   */
+  rampPulseFrequency(freq) {
+    this.pulseFreq = freq;
+
+    // Update lock screen display
+    if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+      navigator.mediaSession.metadata.album = freq + ' Hz';
+    }
+
+    // Binaural mode: pulse frequency = beat frequency
+    if (this.binauralEngine && this.binauralEngine.running) {
+      this.binauralEngine.rampBeatFrequency(freq);
+      return;
+    }
+
+    if (this.audioEngine && this.audioEngine.running) {
+      this.audioEngine.rampPulseFrequency(freq);
+      if (this.visualEngine) {
+        this.visualEngine.pulseFreq = freq;  // just update freq, no startTime reset
+      }
+    } else if (this.visualEngine && this.visualEngine.running) {
+      this.visualEngine.pulseFreq = freq;
+    }
+  }
+
+  /**
    * Set carrier frequency.
    * @param {number} freq
    */

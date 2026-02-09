@@ -277,6 +277,25 @@ export class AudioEngine {
   }
 
   /**
+   * Change pulse frequency without resetting phase.
+   * Used by protocol runner for smooth continuous frequency updates.
+   * @param {number} newFreq — new pulse frequency in Hz
+   */
+  rampPulseFrequency(newFreq) {
+    this.pulseFreq = newFreq;
+    if (!this._running) return;
+
+    if (this._useWorklet) {
+      // Update AudioParam — no phase reset, worklet accumulates smoothly
+      this._workletNode.parameters.get('pulseFreq')
+        .setValueAtTime(newFreq, this.audioCtx.currentTime);
+    } else {
+      // Legacy fallback: use full reset (unavoidable with scheduled gains)
+      this.setPulseFrequency(newFreq);
+    }
+  }
+
+  /**
    * Change carrier frequency.
    * @param {number} newFreq — new carrier frequency in Hz
    */

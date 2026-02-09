@@ -3,8 +3,8 @@
  *
  * Runs on the audio rendering thread, separate from the main thread.
  * Generates isochronic tones (carrier sine wave * pulse gate) with
- * true sample-accurate timing. Uses multiplication-based phase
- * computation to prevent drift.
+ * true sample-accurate timing. Uses phase accumulation for both
+ * carrier and pulse to allow smooth frequency changes.
  *
  * Audio graph: AudioWorkletNode → AnalyserNode → destination
  */
@@ -22,14 +22,14 @@ class PulseWorkletProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this._carrierPhase = 0;
-    this._pulseStartFrame = 0;
+    this._pulsePhase = 0;
 
     this.port.onmessage = (e) => {
       if (e.data.type === 'set-start-frame') {
-        this._pulseStartFrame = e.data.frame;
+        this._pulsePhase = 0;
       } else if (e.data.type === 'reset-pulse') {
-        // Reset pulse timing from a new reference frame
-        this._pulseStartFrame = e.data.frame;
+        // Reset pulse phase (used by slider changes for clean restart)
+        this._pulsePhase = 0;
       }
     };
   }
@@ -52,16 +52,15 @@ class PulseWorkletProcessor extends AudioWorkletProcessor {
     const isPulseConstant = pulseFreqArr.length === 1;
 
     for (let i = 0; i < output.length; i++) {
-      const frame = currentFrame + i;
       const cf = isCarrierConstant ? carrierFreqArr[0] : carrierFreqArr[i];
       const pf = isPulseConstant ? pulseFreqArr[0] : pulseFreqArr[i];
 
-      // Pulse gate: multiplication-based timing from start frame
-      // elapsed = (frame - startFrame) / sampleRate
-      // phase = (elapsed * pulseFreq) % 1.0
-      const elapsed = (frame - this._pulseStartFrame) / sampleRate;
-      const pulsePhase = (elapsed * pf) % 1.0;
-      const gate = pulsePhase < dutyCycle ? 1.0 : 0.0;
+      // Pulse gate: phase accumulation (smooth across frequency changes)
+      const gate = this._pulsePhase < dutyCycle ? 1.0 : 0.0;
+      this._pulsePhase += pf / sampleRate;
+      if (this._pulsePhase >= 1.0) {
+        this._pulsePhase -= Math.floor(this._pulsePhase);
+      }
 
       // Carrier: sine wave with phase accumulation
       const sample = Math.sin(2 * Math.PI * this._carrierPhase) * gate;

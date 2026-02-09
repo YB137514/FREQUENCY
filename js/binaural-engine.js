@@ -198,6 +198,25 @@ export class BinauralEngine {
   }
 
   /**
+   * Change beat frequency smoothly without abrupt jumps.
+   * Used by protocol runner for continuous frequency updates.
+   * @param {number} freq — new beat frequency in Hz
+   */
+  rampBeatFrequency(freq) {
+    this.beatFreq = freq;
+    if (!this._running) return;
+
+    const now = this.audioCtx.currentTime;
+    if (this._useWorklet) {
+      this._workletNode.parameters.get('beatFreq')
+        .linearRampToValueAtTime(freq, now + 0.1);
+    } else if (this._rightOsc) {
+      this._rightOsc.frequency.linearRampToValueAtTime(
+        this.carrierFreq + freq, now + 0.1);
+    }
+  }
+
+  /**
    * Change carrier frequency.
    * @param {number} freq — new carrier frequency in Hz
    */

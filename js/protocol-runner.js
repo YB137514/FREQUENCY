@@ -71,7 +71,7 @@ export class ProtocolRunner {
     const phase = this._getCurrentPhase(elapsedSec);
     const freq = this._computeFrequency(elapsedSec, phase);
 
-    this.controller.setPulseFrequency(freq);
+    this.controller.rampPulseFrequency(freq);
 
     if (this._onTick) {
       this._onTick(elapsedSec, phase.name, freq);
