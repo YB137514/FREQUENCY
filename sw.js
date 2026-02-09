@@ -4,7 +4,7 @@
  * then fetches fresh copy in background to update cache.
  */
 
-const CACHE_NAME = 'frequency-v20';
+const CACHE_NAME = 'frequency-v22';
 
 const ASSETS = [
   './',

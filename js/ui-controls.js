@@ -54,6 +54,7 @@ export class UIControls {
     this.protocolCancelBtn = document.getElementById('protocol-cancel');
 
     this._protocolRunner = null;
+    this._presetButtons = [];
     this._flickerColor = localStorage.getItem('frequency_flicker_color') || '#ffffff';
 
     this._screenRefreshRate = 60;
@@ -72,6 +73,7 @@ export class UIControls {
       this.controller.setPulseFrequency(val);
       if (this.diagnostics) this.diagnostics.resetPulseReadings();
       this._updateDisplays();
+      this._updateActivePreset();
     });
 
     // Carrier frequency slider
@@ -193,8 +195,10 @@ export class UIControls {
         this.controller.setPulseFrequency(freq);
         if (this.diagnostics) this.diagnostics.resetPulseReadings();
         this._updateDisplays();
+        this._updateActivePreset();
       });
       this.presetsContainer.appendChild(btn);
+      this._presetButtons.push({ btn, freq });
     }
 
     // Protocol preset button
@@ -206,6 +210,15 @@ export class UIControls {
       this._startProtocol();
     });
     this.presetsContainer.appendChild(protocolBtn);
+
+    this._updateActivePreset();
+  }
+
+  _updateActivePreset() {
+    const val = parseFloat(this.pulseSlider.value);
+    for (const { btn, freq } of this._presetButtons) {
+      btn.classList.toggle('active', val === freq);
+    }
   }
 
   _updateDisplays() {
@@ -240,7 +253,12 @@ export class UIControls {
       this.diagPulseTarget.textContent = pulseFreq.toFixed(pulseFreq % 1 === 0 ? 0 : 2) + ' Hz';
     }
     if (this.diagVisualTarget) {
-      this.diagVisualTarget.textContent = pulseFreq.toFixed(pulseFreq % 1 === 0 ? 0 : 2) + ' Hz';
+      const mode = this.controller.mode;
+      if (mode === 'visual' || mode === 'both') {
+        this.diagVisualTarget.textContent = pulseFreq.toFixed(pulseFreq % 1 === 0 ? 0 : 2) + ' Hz';
+      } else {
+        this.diagVisualTarget.textContent = '--';
+      }
     }
   }
 
@@ -325,6 +343,7 @@ export class UIControls {
     // Sync slider position and display
     this.pulseSlider.value = freq;
     this._updateDisplays();
+    this._updateActivePreset();
   }
 
   /**

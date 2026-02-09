@@ -476,6 +476,12 @@ input[type="range"]::-moz-range-thumb {
   color: var(--text);
 }
 
+.presets button.active {
+  border-color: var(--accent);
+  background: rgba(108, 92, 231, 0.15);
+  color: var(--text);
+}
+
 /* Protocol status display */
 .protocol-status {
   background: rgba(108, 92, 231, 0.1);

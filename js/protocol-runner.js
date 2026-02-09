@@ -7,7 +7,7 @@
  * Phases:
  *   Adaptation   0:00–2:00  Linear ramp 38 Hz → 13 Hz
  *   Transition   2:00–3:00  Linear ramp 13 Hz → 10 Hz
- *   Entrainment  3:00–18:00 Sinusoidal f(t) = 10 + 2·sin(2π·0.05·t), range 8–12 Hz
+ *   Entrainment  3:00–18:00 Sinusoidal f(t) = 10 + 2·sin(2π/60·t), range 8–12 Hz
  *   Recognition  18:00–20:00 Linear ramp 13 Hz → 38 Hz
  */
 
@@ -16,7 +16,7 @@ export const PROTOCOL_DURATION = 1200; // 20 minutes in seconds
 export const PROTOCOL_PHASES = [
   { name: 'Adaptation',  startSec:    0, endSec:  120, type: 'ramp', freqStart: 38, freqEnd: 13 },
   { name: 'Transition',  startSec:  120, endSec:  180, type: 'ramp', freqStart: 13, freqEnd: 10 },
-  { name: 'Entrainment', startSec:  180, endSec: 1080, type: 'sine', center: 10, amplitude: 2, period: 20 },
+  { name: 'Entrainment', startSec:  180, endSec: 1080, type: 'sine', center: 10, amplitude: 2, period: 60 },
   { name: 'Recognition', startSec: 1080, endSec: 1200, type: 'ramp', freqStart: 13, freqEnd: 38 }
 ];
 
