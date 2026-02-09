@@ -23,6 +23,7 @@ class PulseWorkletProcessor extends AudioWorkletProcessor {
     super();
     this._carrierPhase = 0;
     this._pulsePhase = 0;
+    this._gateValue = 0;
 
     this.port.onmessage = (e) => {
       if (e.data.type === 'set-start-frame') {
@@ -46,6 +47,7 @@ class PulseWorkletProcessor extends AudioWorkletProcessor {
     }
 
     const dutyCycle = parameters.dutyCycle[0];
+    const rampRate = 1.0 / (0.002 * sampleRate); // 2ms gate attack/release
     const carrierFreqArr = parameters.carrierFreq;
     const pulseFreqArr = parameters.pulseFreq;
     const isCarrierConstant = carrierFreqArr.length === 1;
@@ -56,14 +58,21 @@ class PulseWorkletProcessor extends AudioWorkletProcessor {
       const pf = isPulseConstant ? pulseFreqArr[0] : pulseFreqArr[i];
 
       // Pulse gate: phase accumulation (smooth across frequency changes)
-      const gate = this._pulsePhase < dutyCycle ? 1.0 : 0.0;
+      const gateTarget = this._pulsePhase < dutyCycle ? 1.0 : 0.0;
       this._pulsePhase += pf / sampleRate;
       if (this._pulsePhase >= 1.0) {
         this._pulsePhase -= Math.floor(this._pulsePhase);
       }
 
-      // Carrier: sine wave with phase accumulation
-      const sample = Math.sin(2 * Math.PI * this._carrierPhase) * gate;
+      // Smooth gate with ~2ms linear ramp to prevent clicks
+      if (this._gateValue < gateTarget) {
+        this._gateValue = Math.min(this._gateValue + rampRate, gateTarget);
+      } else if (this._gateValue > gateTarget) {
+        this._gateValue = Math.max(this._gateValue - rampRate, gateTarget);
+      }
+
+      // Carrier: sine wave with smoothed gate
+      const sample = Math.sin(2 * Math.PI * this._carrierPhase) * this._gateValue;
       this._carrierPhase += cf / sampleRate;
 
       // Keep phase in [0, 1) to prevent float precision loss over time
