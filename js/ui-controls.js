@@ -343,7 +343,6 @@ export class UIControls {
     // Sync slider position and display
     this.pulseSlider.value = freq;
     this._updateDisplays();
-    this._updateActivePreset();
   }
 
   /**
