@@ -111,6 +111,7 @@
     <button id="run-worklet">AudioWorklet</button>
     <button id="run-diag">Diagnostics</button>
     <button id="run-binaural">Binaural</button>
+    <button id="run-protocol">Protocol</button>
   </div>
 
   <div id="test-results"></div>
@@ -123,6 +124,7 @@
     import { runWorkletTests } from './test-worklet.js';
     import { runDiagnosticsTests } from './test-diagnostics.js';
     import { runBinauralTests } from './test-binaural.js';
+    import { runProtocolTests } from './test-protocol.js';
 
     function bindBtn(id, fn) {
       const btn = document.getElementById(id);
@@ -146,6 +148,7 @@
     bindBtn('run-worklet', runWorkletTests);
     bindBtn('run-diag', runDiagnosticsTests);
     bindBtn('run-binaural', runBinauralTests);
+    bindBtn('run-protocol', runProtocolTests);
 
     bindBtn('run-all', async () => {
       await runAudioEngineTests();
@@ -155,6 +158,7 @@
       await runWorkletTests();
       await runDiagnosticsTests();
       await runBinauralTests();
+      await runProtocolTests();
     });
   </script>
 </body>
