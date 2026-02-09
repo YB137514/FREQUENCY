@@ -5,10 +5,10 @@
  * neurostimulation for depression/anxiety/stress.
  *
  * Phases:
- *   Adaptation   0:00–2:00  Linear ramp 38 Hz → 13 Hz
- *   Transition   2:00–3:00  Linear ramp 13 Hz → 10 Hz
- *   Entrainment  3:00–18:00 Sinusoidal f(t) = 10 + 2·sin(2π/60·t), range 8–12 Hz
- *   Recognition  18:00–20:00 Linear ramp 13 Hz → 38 Hz
+ *   Adaptation   0:00–2:00  Cosine-eased ramp 38 Hz → 13 Hz
+ *   Transition   2:00–3:00  Cosine-eased ramp 13 Hz → 10 Hz
+ *   Entrainment  3:00–18:00 Sinusoidal f(t) = 10 − 2·sin(2π/60·t), range 8–12 Hz
+ *   Recognition  18:00–20:00 Cosine-eased ramp 13 Hz → 38 Hz
  */
 
 export const PROTOCOL_DURATION = 1200; // 20 minutes in seconds
@@ -101,12 +101,14 @@ export class ProtocolRunner {
   _computeFrequency(elapsedSec, phase) {
     if (phase.type === 'ramp') {
       const t = (elapsedSec - phase.startSec) / (phase.endSec - phase.startSec);
-      return phase.freqStart + (phase.freqEnd - phase.freqStart) * t;
+      // Cosine easing: rate is 0 at both ends for smooth phase transitions
+      const eased = (1 - Math.cos(Math.PI * t)) / 2;
+      return phase.freqStart + (phase.freqEnd - phase.freqStart) * eased;
     }
 
-    // Sinusoidal: f(t) = center + amplitude * sin(2π * (1/period) * t)
-    // where t is seconds into this phase
+    // Sinusoidal: f(t) = center - amplitude * sin(2π/period * t)
+    // Phase-shifted by π so oscillation begins descending (matches prior ramp direction)
     const phaseTime = elapsedSec - phase.startSec;
-    return phase.center + phase.amplitude * Math.sin(2 * Math.PI * (1 / phase.period) * phaseTime);
+    return phase.center - phase.amplitude * Math.sin(2 * Math.PI * (1 / phase.period) * phaseTime);
   }
 }
