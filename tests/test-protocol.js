@@ -174,30 +174,30 @@ export async function runProtocolTests() {
       assert.approximately(freq, 10, 0.01, `Expected 10 Hz, got ${freq}`);
     });
 
-    await it('peaks at 12 Hz at quarter period (t=185)', async () => {
-      // period=20s, quarter=5s → t=180+5=185, sin(π/2)=1 → 10+2=12
-      const phase = runner._getCurrentPhase(185);
-      const freq = runner._computeFrequency(185, phase);
+    await it('peaks at 12 Hz at quarter period (t=195)', async () => {
+      // period=60s, quarter=15s → t=180+15=195, sin(π/2)=1 → 10+2=12
+      const phase = runner._getCurrentPhase(195);
+      const freq = runner._computeFrequency(195, phase);
       assert.approximately(freq, 12, 0.01, `Expected 12 Hz, got ${freq}`);
     });
 
-    await it('returns to 10 Hz at half period (t=190)', async () => {
-      // half period=10s → t=180+10=190, sin(π)=0 → 10
-      const phase = runner._getCurrentPhase(190);
-      const freq = runner._computeFrequency(190, phase);
+    await it('returns to 10 Hz at half period (t=210)', async () => {
+      // half period=30s → t=180+30=210, sin(π)=0 → 10
+      const phase = runner._getCurrentPhase(210);
+      const freq = runner._computeFrequency(210, phase);
       assert.approximately(freq, 10, 0.01, `Expected 10 Hz, got ${freq}`);
     });
 
-    await it('troughs at 8 Hz at 3/4 period (t=195)', async () => {
-      // 3/4 period=15s → t=180+15=195, sin(3π/2)=-1 → 10-2=8
-      const phase = runner._getCurrentPhase(195);
-      const freq = runner._computeFrequency(195, phase);
+    await it('troughs at 8 Hz at 3/4 period (t=225)', async () => {
+      // 3/4 period=45s → t=180+45=225, sin(3π/2)=-1 → 10-2=8
+      const phase = runner._getCurrentPhase(225);
+      const freq = runner._computeFrequency(225, phase);
       assert.approximately(freq, 8, 0.01, `Expected 8 Hz, got ${freq}`);
     });
 
-    await it('completes full cycle at t=200', async () => {
-      const phase = runner._getCurrentPhase(200);
-      const freq = runner._computeFrequency(200, phase);
+    await it('completes full cycle at t=240', async () => {
+      const phase = runner._getCurrentPhase(240);
+      const freq = runner._computeFrequency(240, phase);
       assert.approximately(freq, 10, 0.01, `Expected 10 Hz, got ${freq}`);
     });
 
@@ -210,14 +210,14 @@ export async function runProtocolTests() {
       }
     });
 
-    await it('oscillation period is 20 seconds', async () => {
-      // Check two full cycles: peaks at t=185 and t=205
-      const phase1 = runner._getCurrentPhase(185);
-      const freq1 = runner._computeFrequency(185, phase1);
-      const phase2 = runner._getCurrentPhase(205);
-      const freq2 = runner._computeFrequency(205, phase2);
+    await it('oscillation period is 60 seconds', async () => {
+      // Check two full cycles: peaks at t=195 and t=255
+      const phase1 = runner._getCurrentPhase(195);
+      const freq1 = runner._computeFrequency(195, phase1);
+      const phase2 = runner._getCurrentPhase(255);
+      const freq2 = runner._computeFrequency(255, phase2);
       assert.approximately(freq1, freq2, 0.01,
-        `Peak at t=185 (${freq1}) should equal peak at t=205 (${freq2})`);
+        `Peak at t=195 (${freq1}) should equal peak at t=255 (${freq2})`);
     });
   });
 
@@ -382,8 +382,8 @@ export async function runProtocolTests() {
         { t: 120,   min: 12.5, max: 13.5, label: 'adapt→trans' },
         { t: 150,   min: 11,   max: 12,   label: 'trans midpoint' },
         { t: 180,   min: 9.5,  max: 10.5, label: 'trans→entrain' },
-        { t: 185,   min: 11.5, max: 12.5, label: 'entrain peak' },
-        { t: 195,   min: 7.5,  max: 8.5,  label: 'entrain trough' },
+        { t: 195,   min: 11.5, max: 12.5, label: 'entrain peak' },
+        { t: 225,   min: 7.5,  max: 8.5,  label: 'entrain trough' },
         { t: 1080,  min: 12.5, max: 13.5, label: 'entrain→recog' },
         { t: 1140,  min: 25,   max: 26,   label: 'recog midpoint' },
         { t: 1199.9, min: 37.5, max: 38.5, label: 'end' }
