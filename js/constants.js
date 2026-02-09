@@ -34,6 +34,9 @@ export const FLICKER_OPACITY_OFF = 0.0;
 // Duty cycle (fraction of period the tone is ON)
 export const DUTY_CYCLE = 0.5;
 
+// Protocol
+export const PROTOCOL_LABEL = 'Protocol (20 min)';
+
 // Presets (name → pulse/beat frequency in Hz)
 export const PRESETS = {
   'Sleep (0.25 Hz)': 0.25,

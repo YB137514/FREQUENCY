@@ -476,6 +476,91 @@ input[type="range"]::-moz-range-thumb {
   color: var(--text);
 }
 
+/* Protocol status display */
+.protocol-status {
+  background: rgba(108, 92, 231, 0.1);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.protocol-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.protocol-phase {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.protocol-cancel {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.protocol-cancel:hover {
+  color: var(--text);
+}
+
+.protocol-timer {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 18px;
+  text-align: center;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.protocol-separator {
+  color: var(--text-dim);
+  margin: 0 4px;
+}
+
+.protocol-progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.protocol-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.15s linear;
+}
+
+/* Protocol preset button */
+.presets .protocol-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.presets .protocol-btn:hover {
+  background: rgba(108, 92, 231, 0.15);
+  color: var(--text);
+}
+
+/* Locked slider during protocol */
+input[type="range"].protocol-locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* Utility: hidden */
 .hidden { display: none !important; }
 

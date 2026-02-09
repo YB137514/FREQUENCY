@@ -8,8 +8,10 @@ import {
   PULSE_FREQ_MIN, PULSE_FREQ_MAX,
   CARRIER_FREQ_MIN, CARRIER_FREQ_MAX,
   MODES,
-  PRESETS
+  PRESETS,
+  PROTOCOL_LABEL
 } from './constants.js';
+import { ProtocolRunner, PROTOCOL_DURATION } from './protocol-runner.js';
 
 export class UIControls {
   /**
@@ -44,6 +46,14 @@ export class UIControls {
       ? this.pulseSlider.closest('.control-group')?.querySelector('label')
       : null;
 
+    // Protocol elements
+    this.protocolStatus = document.getElementById('protocol-status');
+    this.protocolPhaseEl = document.getElementById('protocol-phase');
+    this.protocolElapsedEl = document.getElementById('protocol-elapsed');
+    this.protocolProgressEl = document.getElementById('protocol-progress');
+    this.protocolCancelBtn = document.getElementById('protocol-cancel');
+
+    this._protocolRunner = null;
     this._flickerColor = localStorage.getItem('frequency_flicker_color') || '#ffffff';
 
     this._screenRefreshRate = 60;
@@ -55,8 +65,9 @@ export class UIControls {
   }
 
   _bindEvents() {
-    // Pulse frequency slider
+    // Pulse frequency slider — no-op during protocol
     this.pulseSlider.addEventListener('input', () => {
+      if (this._protocolRunner && this._protocolRunner.running) return;
       const val = parseFloat(this.pulseSlider.value);
       this.controller.setPulseFrequency(val);
       if (this.diagnostics) this.diagnostics.resetPulseReadings();
@@ -70,9 +81,12 @@ export class UIControls {
       this._updateDisplays();
     });
 
-    // Start/Stop button
+    // Start/Stop button — also cancels protocol
     this.toggleBtn.addEventListener('click', async () => {
       if (this.controller.active) {
+        if (this._protocolRunner && this._protocolRunner.running) {
+          this._stopProtocol(false);
+        }
         this.controller.stop();
         if (this.diagnostics) this.diagnostics.stop();
         this.toggleBtn.textContent = 'Start';
@@ -88,6 +102,13 @@ export class UIControls {
         this._updateDiagTargets();
       }
     });
+
+    // Protocol cancel button
+    if (this.protocolCancelBtn) {
+      this.protocolCancelBtn.addEventListener('click', () => {
+        this._stopProtocol(false);
+      });
+    }
 
     // Mode radio buttons
     this.modeRadios.forEach(radio => {
@@ -167,6 +188,7 @@ export class UIControls {
       const btn = document.createElement('button');
       btn.textContent = name;
       btn.addEventListener('click', () => {
+        if (this._protocolRunner && this._protocolRunner.running) return;
         this.pulseSlider.value = freq;
         this.controller.setPulseFrequency(freq);
         if (this.diagnostics) this.diagnostics.resetPulseReadings();
@@ -174,6 +196,16 @@ export class UIControls {
       });
       this.presetsContainer.appendChild(btn);
     }
+
+    // Protocol preset button
+    const protocolBtn = document.createElement('button');
+    protocolBtn.textContent = PROTOCOL_LABEL;
+    protocolBtn.classList.add('protocol-btn');
+    protocolBtn.addEventListener('click', () => {
+      if (this._protocolRunner && this._protocolRunner.running) return;
+      this._startProtocol();
+    });
+    this.presetsContainer.appendChild(protocolBtn);
   }
 
   _updateDisplays() {
@@ -210,6 +242,89 @@ export class UIControls {
     if (this.diagVisualTarget) {
       this.diagVisualTarget.textContent = pulseFreq.toFixed(pulseFreq % 1 === 0 ? 0 : 2) + ' Hz';
     }
+  }
+
+  /**
+   * Start the timed protocol.
+   */
+  async _startProtocol() {
+    // Start the controller if not already running
+    if (!this.controller.active) {
+      this.toggleBtn.disabled = true;
+      this.toggleBtn.textContent = 'Loading...';
+      await this.controller.start();
+      if (this.diagnostics) this.diagnostics.start();
+      this.toggleBtn.textContent = 'Stop';
+      this.toggleBtn.classList.add('active');
+      this.toggleBtn.disabled = false;
+      this._updateDiagTargets();
+    }
+
+    this._protocolRunner = new ProtocolRunner(this.controller);
+
+    this._protocolRunner.onTick = (elapsed, phaseName, freq) => {
+      this._updateProtocolDisplay(elapsed, phaseName, freq);
+    };
+
+    this._protocolRunner.onComplete = () => {
+      this._stopProtocol(true);
+    };
+
+    // Show status, lock slider
+    if (this.protocolStatus) this.protocolStatus.classList.remove('hidden');
+    this.pulseSlider.classList.add('protocol-locked');
+
+    this._protocolRunner.start();
+  }
+
+  /**
+   * Stop the timed protocol.
+   * @param {boolean} completed — true if protocol finished naturally
+   */
+  _stopProtocol(completed) {
+    if (this._protocolRunner) {
+      this._protocolRunner.stop();
+      this._protocolRunner = null;
+    }
+
+    // Hide status, unlock slider
+    if (this.protocolStatus) this.protocolStatus.classList.add('hidden');
+    this.pulseSlider.classList.remove('protocol-locked');
+
+    if (completed) {
+      this.controller.stop();
+      if (this.diagnostics) this.diagnostics.stop();
+      this.toggleBtn.textContent = 'Start';
+      this.toggleBtn.classList.remove('active');
+    }
+  }
+
+  /**
+   * Update protocol status display.
+   * @param {number} elapsed — seconds elapsed
+   * @param {string} phaseName
+   * @param {number} freq — current frequency
+   */
+  _updateProtocolDisplay(elapsed, phaseName, freq) {
+    if (this.protocolPhaseEl) {
+      this.protocolPhaseEl.textContent = phaseName;
+    }
+
+    if (this.protocolElapsedEl) {
+      const mins = Math.floor(elapsed / 60);
+      const secs = Math.floor(elapsed % 60);
+      this.protocolElapsedEl.textContent =
+        String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    if (this.protocolProgressEl) {
+      const pct = (elapsed / PROTOCOL_DURATION) * 100;
+      this.protocolProgressEl.style.width = pct + '%';
+    }
+
+    // Sync slider position and display
+    this.pulseSlider.value = freq;
+    this._updateDisplays();
   }
 
   /**

@@ -63,6 +63,22 @@
         <div class="presets" id="presets"></div>
       </div>
 
+      <!-- Protocol status display -->
+      <div id="protocol-status" class="protocol-status hidden">
+        <div class="protocol-header">
+          <span class="protocol-phase" id="protocol-phase">--</span>
+          <button class="protocol-cancel" id="protocol-cancel">&times;</button>
+        </div>
+        <div class="protocol-timer">
+          <span id="protocol-elapsed">00:00</span>
+          <span class="protocol-separator">/</span>
+          <span>20:00</span>
+        </div>
+        <div class="protocol-progress-bar">
+          <div class="protocol-progress-fill" id="protocol-progress"></div>
+        </div>
+      </div>
+
       <!-- Carrier tone -->
       <div class="control-group">
         <label>
